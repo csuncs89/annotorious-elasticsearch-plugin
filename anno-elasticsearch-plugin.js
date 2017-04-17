@@ -8,7 +8,7 @@
  */
 annotorious.plugin.ElasticSearch = function(opt_config_options) {
   /** @private **/
-  this._STORE_URI = opt_config_options['base_url'];
+  this._STORE_URI = 'http://' + window.location.hostname + ':9200/annotations/';
 
   /** @private **/
   this._annotations = [];
@@ -64,9 +64,25 @@ annotorious.plugin.ElasticSearch.prototype._showError = function(error) {
  * @private
  */
 annotorious.plugin.ElasticSearch.prototype._loadAnnotations = function(anno) {
-  // TODO need to restrict search to the URL of the annotated
+  // TODO A fixed size value of 10000 might not be good
   var self = this;
-  jQuery.getJSON(this._STORE_URI + '_search?query=*:*&size=1000', function(data) {
+
+  var context = window.location.pathname
+  
+  var query = {
+      "query" : {
+          "constant_score" : {
+              "filter" : {
+                  "term" : {
+                      "context" : context
+                  }
+              }
+          }
+      },
+      "size": 10000
+  };
+
+  jQuery.post(this._STORE_URI + '_search', JSON.stringify(query), function(data) {
     try {
       jQuery.each(data.hits.hits, function(idx, hit) {
         var annotation = hit['_source'];
@@ -94,6 +110,10 @@ annotorious.plugin.ElasticSearch.prototype._loadAnnotations = function(anno) {
  */
 annotorious.plugin.ElasticSearch.prototype._create = function(annotation) {
   var self = this;
+
+  annotation['context'] = self._remove_domain(annotation['context']);
+  annotation['src'] = self._remove_domain(annotation['src']);
+
   jQuery.post(this._STORE_URI + 'annotation/',  JSON.stringify(annotation), function(response) {
     // TODO error handling if response status != 201 (CREATED)
     var id = response['_id'];
@@ -121,4 +141,11 @@ annotorious.plugin.ElasticSearch.prototype._delete = function(annotation) {
     url: this._STORE_URI + 'annotation/' + annotation.id,
     type: 'DELETE'
   });
+}
+
+/**
+ * @private
+ */
+annotorious.plugin.ElasticSearch.prototype._remove_domain = function(url) {
+  return url.replace(/^.*\/\/[^\/]+/, '');
 }
