@@ -71,13 +71,13 @@ annotorious.plugin.ElasticSearch.prototype._loadAnnotations = function(anno) {
   
   var query = {
       "query" : {
-          "constant_score" : {
-              "filter" : {
+          //"constant_score" : {
+          //    "filter" : {
                   "term" : {
                       "context" : context
                   }
-              }
-          }
+          //    }
+          //}
       },
       "size": 10000
   };
