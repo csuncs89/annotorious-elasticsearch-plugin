@@ -111,7 +111,7 @@ annotorious.plugin.ElasticSearch.prototype._loadAnnotations = function(anno) {
 annotorious.plugin.ElasticSearch.prototype._create = function(annotation) {
   var self = this;
 
-  annotation['context'] = self._remove_domain(annotation['context']);
+  annotation['context'] = self._remove_params(self._remove_domain(annotation['context']));
   annotation['src'] = self._remove_domain(annotation['src']);
 
   jQuery.post(this._STORE_URI + 'annotation/',  JSON.stringify(annotation), function(response) {
@@ -148,4 +148,15 @@ annotorious.plugin.ElasticSearch.prototype._delete = function(annotation) {
  */
 annotorious.plugin.ElasticSearch.prototype._remove_domain = function(url) {
   return url.replace(/^.*\/\/[^\/]+/, '');
+}
+
+/**
+ * @private
+ */
+annotorious.plugin.ElasticSearch.prototype._remove_params = function(url) {
+  if (url.indexOf('?') != -1) {
+    return url.substr(0, url.indexOf('?'));
+  } else {
+    return url;
+  }
 }
